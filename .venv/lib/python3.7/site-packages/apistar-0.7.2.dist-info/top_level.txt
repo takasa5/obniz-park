@@ -1,3 +1,0 @@
-apistar
-apistar/client
-apistar/schemas
