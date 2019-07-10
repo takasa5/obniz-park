@@ -32,6 +32,8 @@ async def process_ws(ws):
     while True:
         rcv = await ws.receive_json() # クライアントからのsendを待ち受ける
         print(rcv)
+        if not check_rcv(rcv):
+            continue
         if rcv["name"] == "registrate":
             OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws}
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
@@ -41,9 +43,11 @@ async def process_ws(ws):
             # })
         elif rcv["name"] == "update":
             if rcv.get("x") is not None:
-                OBNIZ_COORDS[rcv["id"]]["x"] = rcv["x"]
+                if abs(OBNIZ_COORDS[rcv["id"]]["x"] - rcv["x"]) <= 1:
+                    OBNIZ_COORDS[rcv["id"]]["x"] = rcv["x"]
             if rcv.get("y") is not None:
-                OBNIZ_COORDS[rcv["id"]]["y"] = rcv["y"]
+                if abs(OBNIZ_COORDS[rcv["id"]]["y"] - rcv["y"]) <= 1:
+                    OBNIZ_COORDS[rcv["id"]]["y"] = rcv["y"]
         await bloadcast()
 
 async def bloadcast():
@@ -51,6 +55,12 @@ async def bloadcast():
     for obniz in OBNIZ_WS_LIST.values():
         await obniz["ws"].send_json(OBNIZ_COORDS)
 
+def check_rcv(rcv):
+    if "name" not in rcv:
+        return False
+    if "id" not in rcv:
+        return False
+    return True
 
 if __name__ == "__main__":
     api.run()

@@ -42,13 +42,12 @@ const webSocket = new WebSocket('ws://localhost:5042/ws');
 
 webSocket.onmessage = function(e) {
     obnizCoords = JSON.parse(e.data);
-    console.log(obnizCoords);
+    // console.log(obnizCoords);
     var canvas = document.getElementById('park');
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var id in obnizCoords) {
         var coord = obnizCoords[id];
-        console.log(coord);
         ctx.fillRect(coord.x, coord.y, 10, 10);
     }
 }
