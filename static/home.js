@@ -1,7 +1,12 @@
+// obniz ID取得
 var obnizId = document.getElementById('obnizId').textContent;
 console.log(obnizId);
+// obniz接続
 var obniz = new Obniz(obnizId, {auto_connect: false});
 tryConnect(obniz);
+// websocket確立
+const webSocket = new WebSocket('ws://localhost:5042/ws');
+
 
 document.addEventListener("DOMContentLoaded", function(event) {
     var editor = ace.edit("editor", {
@@ -25,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     };
 }`);
 
+    // コード適用ボタン
     document.getElementById('apply-btn').addEventListener("click", function() {
         var code = editor.getValue();
         try {
@@ -37,8 +43,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
         }
     });
+    // リセットボタン
+    document.getElementById('reset-btn').addEventListener("click", function() {
+        obniz.onconnect = null;
+        obniz.close();
+        obniz.connect();
+        webSocket.send(JSON.stringify({name: "reset", id: obniz.id}));
+    });
+
 });
-const webSocket = new WebSocket('ws://localhost:5042/ws');
 
 webSocket.onmessage = function(e) {
     obnizCoords = JSON.parse(e.data);
@@ -51,7 +64,7 @@ webSocket.onmessage = function(e) {
         ctx.fillRect(coord.x, coord.y, 10, 10);
     }
 }
-
+// JoyStick example
 // obniz.onconnect = async function() {
 //     var joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
 //     joystick.onchangex = function(val) {
@@ -66,6 +79,18 @@ webSocket.onmessage = function(e) {
 //         else if (val < -0.8)
 //             goUp(obniz);
 //     };
+// }
+
+// button example
+// obniz.onconnect = async function() {
+//     var button = obniz.wired("Button", {signal: 0, gnd: 1});
+//     while(true) {
+//         var pressed = await button.isPressedWait();
+//         if (pressed)
+//             goLeft(obniz);
+//         else
+//             goRight(obniz);
+//     }
 // }
 
 async function tryConnect(obniz) {

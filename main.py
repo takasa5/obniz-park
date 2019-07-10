@@ -37,10 +37,6 @@ async def process_ws(ws):
         if rcv["name"] == "registrate":
             OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws}
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
-            # OBNIZ_COORDS.append({
-            #     "id": rcv["id"],
-            #     "x": 0, "y": 0
-            # })
         elif rcv["name"] == "update":
             if rcv.get("x") is not None:
                 if abs(OBNIZ_COORDS[rcv["id"]]["x"] - rcv["x"]) <= 1:
@@ -48,6 +44,8 @@ async def process_ws(ws):
             if rcv.get("y") is not None:
                 if abs(OBNIZ_COORDS[rcv["id"]]["y"] - rcv["y"]) <= 1:
                     OBNIZ_COORDS[rcv["id"]]["y"] = rcv["y"]
+        elif rcv["name"] == "reset":
+            OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
         await bloadcast()
 
 async def bloadcast():
