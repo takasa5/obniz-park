@@ -34,9 +34,11 @@ async def process_ws(ws):
         print(rcv)
         if not check_rcv(rcv):
             continue
+        # 新規ユーザの登録(wsと座標を登録)
         if rcv["name"] == "registrate":
             OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws}
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
+        # 座標の更新
         elif rcv["name"] == "update":
             if rcv.get("x") is not None:
                 if abs(OBNIZ_COORDS[rcv["id"]]["x"] - rcv["x"]) <= 1:
@@ -44,6 +46,7 @@ async def process_ws(ws):
             if rcv.get("y") is not None:
                 if abs(OBNIZ_COORDS[rcv["id"]]["y"] - rcv["y"]) <= 1:
                     OBNIZ_COORDS[rcv["id"]]["y"] = rcv["y"]
+        # 座標リセット
         elif rcv["name"] == "reset":
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
         # 全員に変更を送信

@@ -1,12 +1,17 @@
 // obniz ID取得
 var obnizId = document.getElementById('obnizId').textContent;
 console.log(obnizId);
-// obniz接続
-var obniz = new Obniz(obnizId, {auto_connect: false});
-tryConnect(obniz);
-// websocket確立
-const webSocket = new WebSocket('ws://localhost:5042/ws');
-
+var regex = new RegExp(/[0-9]{4}-?[0-9]{4}/);
+if (!regex.test(obnizId)) {
+    alert("ログインフォームにobniz IDを入力してログインしてください。");
+    window.location.href = "/"
+} else {
+    // obniz接続
+    obniz = new Obniz(obnizId, {auto_connect: false});
+    tryConnect(obniz);
+    // websocket確立
+    webSocket = new WebSocket('ws://localhost:5042/ws');
+}
 
 document.addEventListener("DOMContentLoaded", function(event) {
     var editor = ace.edit("editor", {
