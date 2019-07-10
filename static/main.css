@@ -9,3 +9,7 @@ body, html {
     width: 100%;
     height: 80%;
 }
+
+#editor {
+    height: 300px;
+}

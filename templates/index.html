@@ -1,9 +1,23 @@
 {% extends "layout.htm" %}
 {% block content %}
 <div class="container">
-    <form method="post" action="/obnizid">
-        <input type="text" size="9" name="id" required pattern="[0-9]{4}-?[0-9]{4}">
-        <input type="submit" value="送信" class="btn waves-effect waves-light">
-    </form>
+    <div class="col s12 card">
+        <div class="card-content">
+            <span class="card-title">obniz-park</span>
+            <form method="post" action="/obnizid">
+                <div class="input-field">
+                    <input id="obniz-id" type="text" size="9" name="id" required pattern="[0-9]{4}-?[0-9]{4}">
+                    <label for="obniz-id">obniz ID</label>
+                </div>
+                <div class="input-field">
+                    <input id="access-token" type="text" name="token">
+                    <label for="access-token">access token</label>
+                </div>
+                <div class="card-action center">
+                    <input type="submit" value="送信" class="btn waves-effect waves-light">
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
