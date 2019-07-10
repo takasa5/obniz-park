@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 webSocket.onmessage = function(e) {
     obnizCoords = JSON.parse(e.data);
-    // console.log(obnizCoords);
     var canvas = document.getElementById('park');
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);

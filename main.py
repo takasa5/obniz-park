@@ -46,12 +46,20 @@ async def process_ws(ws):
                     OBNIZ_COORDS[rcv["id"]]["y"] = rcv["y"]
         elif rcv["name"] == "reset":
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
+        # 全員に変更を送信
         await bloadcast()
 
 async def bloadcast():
     global OBNIZ_WS_LIST, OBNIZ_COORDS
-    for obniz in OBNIZ_WS_LIST.values():
-        await obniz["ws"].send_json(OBNIZ_COORDS)
+    for obniz_id in OBNIZ_WS_LIST.keys():
+        try:
+            await OBNIZ_WS_LIST[obniz_id]["ws"].send_json(OBNIZ_COORDS)
+        except RuntimeError as e:
+            print("delete", obniz_id)
+            OBNIZ_WS_LIST[obniz_id] = None
+            OBNIZ_COORDS.pop(obniz_id)
+    # 更新(WS_LISTから切断されたものを消去)
+    OBNIZ_WS_LIST = {key: value for key, value in OBNIZ_WS_LIST.items() if value is not None}
 
 def check_rcv(rcv):
     if "name" not in rcv:
