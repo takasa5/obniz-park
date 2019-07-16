@@ -18,12 +18,17 @@ def hello(req, resp):
 async def login(req, resp):
     if req.method == "post":
         data = await req.media()
-        api.redirect(resp, '/' + data['id'])
+        if 'token' in data:
+            api.redirect(resp, '/' + data['id'] + "?access_token=" + data['token'])
+        else:
+            api.redirect(resp, '/' + data['id'])
 
 # 受け取ったデータをhtml->JSに流す(ほんとは/obnizidから直接やりたい)
 @api.route('/{obnizid}')
 def home(req, resp, *, obnizid):
-    resp.content = api.template('home.html', obniz_id=obnizid)
+    resp.content = api.template(
+        'home.html', obniz_id=obnizid, access_token=req.params.get("access_token", None)
+    )
 
 # WS待ち受け
 @api.route('/ws', websocket=True)

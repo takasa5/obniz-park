@@ -7,7 +7,10 @@ if (!regex.test(obnizId)) {
     window.location.href = "/"
 } else {
     // obniz接続
-    obniz = new Obniz(obnizId, {auto_connect: false});
+    obniz = new Obniz(obnizId, {
+        auto_connect: false,
+        access_token: document.getElementById('accessToken').textContent
+    });
     tryConnect(obniz);
     // websocket確立
     webSocket = new WebSocket('ws://localhost:5042/ws');
@@ -79,34 +82,6 @@ webSocket.onmessage = function(e) {
             console.log("missing data");
     }
 }
-// JoyStick example
-// obniz.onconnect = async function() {
-//     var joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
-//     joystick.onchangex = function(val) {
-//         if (val > 0.8)
-//             goRight(obniz);
-//         else if (val < -0.8)
-//             goLeft(obniz);
-//     };
-//     joystick.onchangey = function(val) {
-//         if (val > 0.8)
-//             goDown(obniz);
-//         else if (val < -0.8)
-//             goUp(obniz);
-//     };
-// }
-
-// button example
-// obniz.onconnect = async function() {
-//     var button = obniz.wired("Button", {signal: 0, gnd: 1});
-//     while(true) {
-//         var pressed = await button.isPressedWait();
-//         if (pressed)
-//             goLeft(obniz);
-//         else
-//             goRight(obniz);
-//     }
-// }
 
 async function tryConnect(obniz) {
     let connected = await obniz.connectWait();
