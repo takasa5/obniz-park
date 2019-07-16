@@ -2,7 +2,6 @@ import json
 import secrets
 
 import responder
-from obniz import Obniz
 
 api = responder.API()
 
@@ -37,12 +36,16 @@ async def process_ws(ws):
     await ws.accept()
     while True:
         rcv = await ws.receive_json() # クライアントからのsendを待ち受ける
-        print(rcv)
+        print("WS:", rcv)
         if not check_rcv(rcv):
             continue
-        # 新規ユーザの登録(wsと座標を登録)
+        # 新規ユーザの登録(wsと座標を登録)，認証トークンの発行
         if rcv["name"] == "registrate":
-            # registrateを回されると落ちるのでobniz存在確認をすべき？
+            # wsが既に存在していた場合，追加しない(invalid registrate 対策)
+            ws_list = [dic["ws"] for dic in OBNIZ_WS_LIST.values()]
+            if ws in ws_list:
+                print("ws already exist")
+                continue
             token = secrets.token_hex()
             OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws, "token": token}
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
@@ -51,6 +54,7 @@ async def process_ws(ws):
         elif rcv["name"] == "update":
             # トークンの確認
             if not check_token(rcv["id"], rcv["token"]):
+                print("Invalid Token")
                 continue
             if rcv.get("x") is not None:
                 if abs(OBNIZ_COORDS[rcv["id"]]["x"] - rcv["x"]) <= 1:
@@ -80,6 +84,7 @@ async def bloadcast():
             OBNIZ_WS_LIST[obniz_id] = None
             OBNIZ_COORDS.pop(obniz_id)
     # 更新(WS_LISTから切断されたものを消去)
+    
     OBNIZ_WS_LIST = {key: value for key, value in OBNIZ_WS_LIST.items() if value is not None}
 
 def check_rcv(rcv):

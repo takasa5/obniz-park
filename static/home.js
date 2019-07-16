@@ -72,6 +72,11 @@ webSocket.onmessage = function(e) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (var id in obnizCoords) {
                 var coord = obnizCoords[id];
+                if (id == obnizId) {
+                    ctx.fillStyle = "#00afd5";
+                } else {
+                    ctx.fillStyle = "#000000";
+                }
                 ctx.fillRect(coord.x, coord.y, 10, 10);
             }
             break;
