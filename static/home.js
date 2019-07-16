@@ -1,7 +1,7 @@
 // obniz ID取得
-var obnizId = document.getElementById('obnizId').textContent;
+const obnizId = document.getElementById('obnizId').textContent;
 console.log(obnizId);
-var regex = new RegExp(/[0-9]{4}-?[0-9]{4}/);
+const regex = new RegExp(/[0-9]{4}-?[0-9]{4}/);
 if (!regex.test(obnizId)) {
     alert("ログインフォームにobniz IDを入力してログインしてください。");
     window.location.href = "/"
@@ -14,7 +14,7 @@ if (!regex.test(obnizId)) {
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
-    var editor = ace.edit("editor", {
+    let editor = ace.edit("editor", {
         useWorker: false
     });
     editor.setTheme("ace/theme/tomorrow");
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     // コード適用ボタン
     document.getElementById('apply-btn').addEventListener("click", function() {
-        var code = editor.getValue();
+        let code = editor.getValue();
         try {
             eval(code); 
             obniz.close();
@@ -53,19 +53,30 @@ document.addEventListener("DOMContentLoaded", function(event) {
         obniz.onconnect = null;
         obniz.close();
         obniz.connect();
-        webSocket.send(JSON.stringify({name: "reset", id: obniz.id}));
+        // webSocket.send(JSON.stringify({name: "reset", id: obniz.id}));
+        reset(obniz);
     });
 
 });
 
 webSocket.onmessage = function(e) {
-    obnizCoords = JSON.parse(e.data);
-    var canvas = document.getElementById('park');
-    var ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (var id in obnizCoords) {
-        var coord = obnizCoords[id];
-        ctx.fillRect(coord.x, coord.y, 10, 10);
+    let data = JSON.parse(e.data);
+    switch (data["name"]) {
+        case "coords":
+            obnizCoords = data["coords"];
+            var canvas = document.getElementById('park');
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (var id in obnizCoords) {
+                var coord = obnizCoords[id];
+                ctx.fillRect(coord.x, coord.y, 10, 10);
+            }
+            break;
+        case "token":
+            myToken = data["token"];
+            break;
+        default:
+            console.log("missing data");
     }
 }
 // JoyStick example
@@ -98,7 +109,7 @@ webSocket.onmessage = function(e) {
 // }
 
 async function tryConnect(obniz) {
-    var connected = await obniz.connectWait();
+    let connected = await obniz.connectWait();
     console.log(connected);
     if (connected) {
         console.log(obniz);
@@ -111,24 +122,35 @@ async function tryConnect(obniz) {
 
 function goRight(obniz) {
     webSocket.send(JSON.stringify({
+        token: myToken,
         name: "update", id: obniz.id, x: obnizCoords[obniz.id].x + 1
     }));
 }
 
 function goLeft(obniz) {
     webSocket.send(JSON.stringify({
+        token: myToken,
         name: "update", id: obniz.id, x: obnizCoords[obniz.id].x - 1
     }));
 }
 
 function goUp(obniz) {
     webSocket.send(JSON.stringify({
+        token: myToken,
         name: "update", id: obniz.id, y: obnizCoords[obniz.id].y - 1
     }));
 }
 
 function goDown(obniz) {
     webSocket.send(JSON.stringify({
+        token: myToken,
         name: "update", id: obniz.id, y: obnizCoords[obniz.id].y + 1
     }));
+}
+
+function reset(obniz) {
+    webSocket.send(JSON.stringify({
+        token: myToken,
+        name: "reset", id: obniz.id
+    }))
 }

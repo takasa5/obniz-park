@@ -1,4 +1,5 @@
 import json
+import secrets
 
 import responder
 from obniz import Obniz
@@ -36,10 +37,16 @@ async def process_ws(ws):
             continue
         # 新規ユーザの登録(wsと座標を登録)
         if rcv["name"] == "registrate":
-            OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws}
+            # registrateを回されると落ちるのでobniz存在確認をすべき？
+            token = secrets.token_hex()
+            OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws, "token": token}
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
+            await ws.send_json({"name": "token", "token": token})
         # 座標の更新
         elif rcv["name"] == "update":
+            # トークンの確認
+            if not check_token(rcv["id"], rcv["token"]):
+                continue
             if rcv.get("x") is not None:
                 if abs(OBNIZ_COORDS[rcv["id"]]["x"] - rcv["x"]) <= 1:
                     OBNIZ_COORDS[rcv["id"]]["x"] = rcv["x"]
@@ -48,6 +55,9 @@ async def process_ws(ws):
                     OBNIZ_COORDS[rcv["id"]]["y"] = rcv["y"]
         # 座標リセット
         elif rcv["name"] == "reset":
+            # トークンの確認
+            if not check_token(rcv["id"], rcv["token"]):
+                continue
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0}
         # 全員に変更を送信
         await bloadcast()
@@ -56,7 +66,10 @@ async def bloadcast():
     global OBNIZ_WS_LIST, OBNIZ_COORDS
     for obniz_id in OBNIZ_WS_LIST.keys():
         try:
-            await OBNIZ_WS_LIST[obniz_id]["ws"].send_json(OBNIZ_COORDS)
+            await OBNIZ_WS_LIST[obniz_id]["ws"].send_json({
+                    "name": "coords",
+                    "coords": OBNIZ_COORDS
+                  })
         except RuntimeError as e:
             print("delete", obniz_id)
             OBNIZ_WS_LIST[obniz_id] = None
@@ -70,6 +83,13 @@ def check_rcv(rcv):
     if "id" not in rcv:
         return False
     return True
+
+def check_token(obniz_id, token):
+    global OBNIZ_WS_LIST
+    return secrets.compare_digest(
+        OBNIZ_WS_LIST[obniz_id]["token"],
+        token
+    )
 
 if __name__ == "__main__":
     api.run()
