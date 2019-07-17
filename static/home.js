@@ -64,20 +64,41 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 webSocket.onmessage = function(e) {
     let data = JSON.parse(e.data);
+    let pointList = [];
     switch (data["name"]) {
         case "coords":
-            obnizCoords = data["coords"];
-            var canvas = document.getElementById('park');
-            var ctx = canvas.getContext('2d');
+            obnizCoords = data["obniz"];
+            foodCoords = data["food"];
+            let canvas = document.getElementById('park');
+            let ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (var id in obnizCoords) {
-                var coord = obnizCoords[id];
+            for (let id in obnizCoords) {
+                let coord = obnizCoords[id];
                 if (id == obnizId) {
                     ctx.fillStyle = "#00afd5";
                 } else {
                     ctx.fillStyle = "#000000";
                 }
                 ctx.fillRect(coord.x, coord.y, 10, 10);
+                pointList.push(obnizCoords[id].point);
+            }
+            for (let id in foodCoords) {
+                let coord = foodCoords[id];
+                ctx.beginPath();
+                ctx.fillStyle = "yellow";
+                ctx.arc(coord.x * canvas.height, coord.y * canvas.height, 1, 0, Math.PI*2, false);
+                ctx.fill();
+            }
+            if (document.getElementById("score").textContent != obnizCoords[obnizId]["point"]) {
+                document.getElementById("score").textContent = obnizCoords[obnizId]["point"];
+            }
+            if (document.getElementById("connected").textContent != Object.keys(obnizCoords).length) {
+                document.getElementById("connected").textContent = Object.keys(obnizCoords).length;
+            }
+            pointList.sort((a, b) => b - a);
+            let myRank = pointList.indexOf(obnizCoords[obnizId].point) + 1;
+            if (document.getElementById("rank").textContent != myRank) {
+                document.getElementById("rank").textContent = myRank;
             }
             break;
         case "token":
@@ -101,30 +122,38 @@ async function tryConnect(obniz) {
 }
 
 function goRight(obniz) {
+    let canvas = document.getElementById('park');
     webSocket.send(JSON.stringify({
         token: myToken,
-        name: "update", id: obniz.id, x: obnizCoords[obniz.id].x + 1
+        name: "update", id: obniz.id, x: obnizCoords[obniz.id].x + 1,
+        height: canvas.height
     }));
 }
 
 function goLeft(obniz) {
+    let canvas = document.getElementById('park');
     webSocket.send(JSON.stringify({
         token: myToken,
-        name: "update", id: obniz.id, x: obnizCoords[obniz.id].x - 1
+        name: "update", id: obniz.id, x: obnizCoords[obniz.id].x - 1,
+        height: canvas.height
     }));
 }
 
 function goUp(obniz) {
+    let canvas = document.getElementById('park');
     webSocket.send(JSON.stringify({
         token: myToken,
-        name: "update", id: obniz.id, y: obnizCoords[obniz.id].y - 1
+        name: "update", id: obniz.id, y: obnizCoords[obniz.id].y - 1,
+        height: canvas.height
     }));
 }
 
 function goDown(obniz) {
+    let canvas = document.getElementById('park');
     webSocket.send(JSON.stringify({
         token: myToken,
-        name: "update", id: obniz.id, y: obnizCoords[obniz.id].y + 1
+        name: "update", id: obniz.id, y: obnizCoords[obniz.id].y + 1,
+        height: canvas.height
     }));
 }
 

@@ -44,3 +44,22 @@ obniz.onconnect = async function() {
         exVal = position;
     }
 }
+
+// GyroSensor
+obniz.onconnect = async function() {
+    let sensor = obniz.wired("KXR94-2050",
+        { vcc:0, gnd:1, x:2, y:3, z:4, enable:5, self_test:6 }
+    );
+    sensor.onChange = function(value) {
+        if (value.x > 0.2) {
+            goLeft(obniz);
+        } else if (value.x < -0.2) {
+            goRight(obniz);
+        }
+        if (value.y > 0.2) {
+            goDown(obniz);
+        } else if (value.y < -0.2) {
+            goUp(obniz);
+        }
+    }
+}
