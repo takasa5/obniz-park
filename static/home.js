@@ -1,6 +1,5 @@
 // obniz ID取得
 const obnizId = document.getElementById('obnizId').textContent;
-console.log(obnizId);
 const regex = new RegExp(/[0-9]{4}-?[0-9]{4}/);
 if (!regex.test(obnizId)) {
     alert("ログインフォームにobniz IDを入力してログインしてください。");
@@ -111,9 +110,7 @@ webSocket.onmessage = function(e) {
 
 async function tryConnect(obniz) {
     let connected = await obniz.connectWait();
-    console.log(connected);
     if (connected) {
-        console.log(obniz);
         webSocket.send(JSON.stringify({name: "registrate", id: obniz.id}));
     } else {
         alert("ログインに失敗しました。やり直してください。");

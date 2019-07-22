@@ -69,12 +69,23 @@ async def process_ws(ws):
             # エサの取得処理
             r = rcv["height"]
             prev_count = len(FOOD_COORDS)
-            FOOD_COORDS = [{"x": coord["x"], "y": coord["y"]} for coord in FOOD_COORDS if not include_coord({"x": coord["x"] * r, "y": coord["y"] * r}, OBNIZ_COORDS[rcv["id"]])]
+            FOOD_COORDS = [
+                coord for coord in FOOD_COORDS
+                if not include_coord(
+                    {"x": coord["x"] * r, "y": coord["y"] * r},
+                    OBNIZ_COORDS[rcv["id"]]
+                )
+            ]
             OBNIZ_COORDS[rcv["id"]]["point"] += prev_count - len(FOOD_COORDS)
             # エサの再配置
             if len(FOOD_COORDS) <= 20:
                 for _ in range(FOOD_MAX - len(FOOD_COORDS)):
-                    FOOD_COORDS.append({"x": random.uniform(0, 2.0), "y": random.uniform(0, 1.0)})
+                    FOOD_COORDS.append(
+                        {
+                            "x": random.uniform(0, 2.0),
+                            "y": random.uniform(0, 1.0)
+                        }
+                    )
         # 座標リセット
         elif rcv["name"] == "reset":
             # トークンの確認
@@ -102,7 +113,9 @@ async def bloadcast():
             OBNIZ_WS_LIST[obniz_id] = None
             OBNIZ_COORDS.pop(obniz_id)
     # 更新(WS_LISTから切断されたものを消去)
-    OBNIZ_WS_LIST = {key: value for key, value in OBNIZ_WS_LIST.items() if value is not None}
+    OBNIZ_WS_LIST = {
+        key: value for key, value in OBNIZ_WS_LIST.items() if value is not None
+    }
 
 def check_rcv(rcv):
     if "name" not in rcv:
@@ -119,5 +132,8 @@ def check_token(obniz_id, token):
     )
 
 if __name__ == "__main__":
-    FOOD_COORDS = [{"x": random.uniform(0, 2.0), "y": random.uniform(0, 1.0)} for i in range(FOOD_MAX)]
+    FOOD_COORDS = [
+        {"x": random.uniform(0, 2.0), "y": random.uniform(0, 1.0)}
+        for i in range(FOOD_MAX)
+    ]
     api.run()
