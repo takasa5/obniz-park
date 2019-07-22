@@ -12,7 +12,8 @@ if (!regex.test(obnizId)) {
     });
     tryConnect(obniz);
     // websocket確立
-    webSocket = new WebSocket('ws://localhost:5042/ws');
+    console.log(location.href)
+    webSocket = new WebSocket('ws://' + location.host + '/ws');
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
