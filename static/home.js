@@ -5,15 +5,14 @@ if (!regex.test(obnizId)) {
     alert("ログインフォームにobniz IDを入力してログインしてください。");
     window.location.href = "/"
 } else {
+    // websocket確立
+    webSocket = new WebSocket('ws://' + location.host + '/ws');
     // obniz接続
     obniz = new Obniz(obnizId, {
         auto_connect: false,
         access_token: document.getElementById('accessToken').textContent
     });
     tryConnect(obniz);
-    // websocket確立
-    console.log(location.href)
-    webSocket = new WebSocket('ws://' + location.host + '/ws');
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
@@ -76,6 +75,7 @@ webSocket.onmessage = function(e) {
                 let coord = obnizCoords[id];
                 if (id == obnizId) {
                     ctx.fillStyle = "#00afd5";
+                    myCoord = coord;
                 } else {
                     ctx.fillStyle = "#000000";
                 }
@@ -101,9 +101,6 @@ webSocket.onmessage = function(e) {
                 document.getElementById("rank").textContent = myRank;
             }
             break;
-        case "token":
-            myToken = data["token"];
-            break;
         default:
             console.log("missing data");
     }
@@ -121,43 +118,42 @@ async function tryConnect(obniz) {
 
 function goRight(obniz) {
     let canvas = document.getElementById('park');
+    myCoord.x += 1;
     webSocket.send(JSON.stringify({
-        token: myToken,
-        name: "update", id: obniz.id, x: obnizCoords[obniz.id].x + 1,
+        name: "update", x: myCoord.x,
         height: canvas.height
     }));
 }
 
 function goLeft(obniz) {
     let canvas = document.getElementById('park');
+    myCoord.x -= 1;
     webSocket.send(JSON.stringify({
-        token: myToken,
-        name: "update", id: obniz.id, x: obnizCoords[obniz.id].x - 1,
+        name: "update", x: myCoord.x,
         height: canvas.height
     }));
 }
 
 function goUp(obniz) {
     let canvas = document.getElementById('park');
+    myCoord.y -= 1;
     webSocket.send(JSON.stringify({
-        token: myToken,
-        name: "update", id: obniz.id, y: obnizCoords[obniz.id].y - 1,
+        name: "update", y: myCoord.y,
         height: canvas.height
     }));
 }
 
 function goDown(obniz) {
     let canvas = document.getElementById('park');
+    myCoord.y += 1;
     webSocket.send(JSON.stringify({
-        token: myToken,
-        name: "update", id: obniz.id, y: obnizCoords[obniz.id].y + 1,
+        name: "update", y: myCoord.y,
         height: canvas.height
     }));
 }
 
 function reset(obniz) {
     webSocket.send(JSON.stringify({
-        token: myToken,
-        name: "reset", id: obniz.id
+        name: "reset"
     }))
 }
