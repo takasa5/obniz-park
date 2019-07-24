@@ -109,7 +109,8 @@ webSocket.onmessage = function(e) {
 async function tryConnect(obniz) {
     let connected = await obniz.connectWait();
     if (connected) {
-        webSocket.send(JSON.stringify({name: "registrate", id: obniz.id}));
+        myUuid = generateUuid();
+        webSocket.send(JSON.stringify({name: "registrate", id: obniz.id, uuid: myUuid}));
     } else {
         alert("ログインに失敗しました。やり直してください。");
         window.location.href = "/"
@@ -121,7 +122,8 @@ function goRight(obniz) {
     myCoord.x += 1;
     webSocket.send(JSON.stringify({
         name: "update", x: myCoord.x,
-        height: canvas.height
+        height: canvas.height,
+        uuid: myUuid
     }));
 }
 
@@ -130,7 +132,8 @@ function goLeft(obniz) {
     myCoord.x -= 1;
     webSocket.send(JSON.stringify({
         name: "update", x: myCoord.x,
-        height: canvas.height
+        height: canvas.height,
+        uuid: myUuid
     }));
 }
 
@@ -139,7 +142,8 @@ function goUp(obniz) {
     myCoord.y -= 1;
     webSocket.send(JSON.stringify({
         name: "update", y: myCoord.y,
-        height: canvas.height
+        height: canvas.height,
+        uuid: myUuid
     }));
 }
 
@@ -148,12 +152,31 @@ function goDown(obniz) {
     myCoord.y += 1;
     webSocket.send(JSON.stringify({
         name: "update", y: myCoord.y,
-        height: canvas.height
+        height: canvas.height,
+        uuid: myUuid
     }));
 }
 
 function reset(obniz) {
     webSocket.send(JSON.stringify({
-        name: "reset"
+        name: "reset",
+        uuid: myUuid
     }))
+}
+
+function generateUuid() {
+    // https://github.com/GoogleChrome/chrome-platform-analytics/blob/master/src/internal/identifier.js
+    // const FORMAT: string = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+    let chars = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".split("");
+    for (let i = 0, len = chars.length; i < len; i++) {
+        switch (chars[i]) {
+            case "x":
+                chars[i] = Math.floor(Math.random() * 16).toString(16);
+                break;
+            case "y":
+                chars[i] = (Math.floor(Math.random() * 4) + 8).toString(16);
+                break;
+        }
+    }
+    return chars.join("");
 }

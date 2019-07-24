@@ -2,33 +2,9 @@ import random
 
 import responder
 
-api = responder.API()
+api = responder.API()    
 
-class Obniz_ws:
-    def __init__(self):
-        self.ws_list = []
-        self.id_list = []
-    
-    def append(self, ws, obniz_id):
-        self.ws_list.append(ws)
-        self.id_list.append(obniz_id)
-    
-    def id_from_ws(self, ws):
-        idx = self.ws_list.index(ws)
-        return self.id_list[idx]
-    
-    def tuplelist(self):
-        return list(zip(self.ws_list, self.id_list))
-    
-    def clean(self):
-        if None in self.ws_list:
-            delete_idx = [i for i, ws in enumerate(self.ws_list) if ws is None]
-            for idx in delete_idx:
-                self.ws_list.pop(idx)
-                self.id_list.pop(idx)
-    
-
-OBNIZ_WS_LIST = Obniz_ws() # 接続情報など，サーバ側で照合するためのデータ
+OBNIZ_WS_LIST = {} # 接続情報など，サーバ側で照合するためのデータ
 OBNIZ_COORDS = {} # 座標をはじめとする，クライアント側に送信するデータ
 FOOD_COORDS = []
 FOOD_MAX = 100
@@ -64,17 +40,16 @@ async def process_ws(ws):
     while True:
         rcv = await ws.receive_json() # クライアントからのsendを待ち受ける
         print("WS:", rcv)
-        print(dir(ws))
         if not check_rcv(rcv):
             continue
         # 新規ユーザの登録(wsと座標を登録)，認証トークンの発行
         if rcv["name"] == "registrate":
             # OBNIZ_WS_LIST[rcv["id"]] = {"ws": ws, "token": token}
-            OBNIZ_WS_LIST.append(ws, rcv["id"])
+            OBNIZ_WS_LIST[rcv["uuid"]] = {"ws": ws, "id": rcv["id"]}
             OBNIZ_COORDS[rcv["id"]] = {"x": 0, "y": 0, "point": 0}
         # 座標の更新
         elif rcv["name"] == "update":
-            obniz_id = OBNIZ_WS_LIST.id_from_ws(ws)
+            obniz_id = OBNIZ_WS_LIST[rcv["uuid"]]["id"]
             if rcv.get("x") is not None:
                 if abs(OBNIZ_COORDS[obniz_id]["x"] - rcv["x"]) <= 1:
                     OBNIZ_COORDS[obniz_id]["x"] = rcv["x"]
@@ -103,7 +78,7 @@ async def process_ws(ws):
                     )
         # 座標リセット
         elif rcv["name"] == "reset":
-            obniz_id = OBNIZ_WS_LIST.id_from_ws(ws)
+            obniz_id = OBNIZ_WS_LIST[rcv["uuid"]]["id"]
             OBNIZ_COORDS[obniz_id] = {"x": 0, "y": 0, "point": 0}
         # 全員に変更を送信
         await bloadcast()
@@ -114,9 +89,10 @@ def include_coord(point, area_ul):
 
 async def bloadcast():
     global OBNIZ_WS_LIST, OBNIZ_COORDS, FOOD_COORDS
-    for i, ws in enumerate(OBNIZ_WS_LIST.ws_list):
-        if ws is None:
-            continue
+    disconnected_list = []
+    for uuid, value in OBNIZ_WS_LIST.items():
+        obniz_id = value["id"]
+        ws = value["ws"]
         try:
             await ws.send_json({
                     "name": "coords",
@@ -124,12 +100,14 @@ async def bloadcast():
                     "food": FOOD_COORDS
                   })
         except RuntimeError as e:
-            OBNIZ_WS_LIST.ws_list[i] = None
-    if len(OBNIZ_WS_LIST.ws_list) > 10:
-        OBNIZ_WS_LIST.clean()
+            disconnected_list.append(uuid)
+    for uuid in disconnected_list:
+        OBNIZ_WS_LIST.pop(uuid)
 
 def check_rcv(rcv):
     if "name" not in rcv:
+        return False
+    if "uuid" not in rcv:
         return False
     return True
 
