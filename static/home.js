@@ -1,6 +1,7 @@
 // obniz ID取得
 const obnizId = document.getElementById('obnizId').textContent;
 const regex = new RegExp(/[0-9]{4}-?[0-9]{4}/);
+const movePx = 2;
 if (!regex.test(obnizId)) {
     alert("ログインフォームにobniz IDを入力してログインしてください。");
     window.location.href = "/"
@@ -22,19 +23,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
     editor.setTheme("ace/theme/tomorrow");
     editor.session.setMode("ace/mode/javascript");
     editor.setValue(`obniz.onconnect = async function() {
-    var joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
-    joystick.onchangex = function(val) {
-        if (val > 0.8)
-            goRight(obniz);
-        else if (val < -0.8)
-            goLeft(obniz);
-    };
-    joystick.onchangey = function(val) {
-        if (val > 0.8)
+    let joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
+    while (true) {
+        let x = await joystick.getXWait()
+        let y = await joystick.getYWait()
+        if (x > 0.8)
             goDown(obniz);
-        else if (val < -0.8)
+        else if (x < -0.8)
             goUp(obniz);
-    };
+        if (y > 0.8)
+            goLeft(obniz);
+        else if (y < -0.8)
+            goRight(obniz);
+    }
 }`);
 
     // コード適用ボタン
@@ -67,7 +68,8 @@ webSocket.onmessage = function(e) {
     switch (data["name"]) {
         case "coords":
             obnizCoords = data["obniz"];
-            foodCoords = data["food"];
+            let lostFoodCoords = data["lost"];
+            // foodCoords = data["food"];
             let canvas = document.getElementById('park');
             let ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -82,6 +84,8 @@ webSocket.onmessage = function(e) {
                 ctx.fillRect(coord.x, coord.y, 10, 10);
                 pointList.push(obnizCoords[id].point);
             }
+            // なくなったエサを削除
+            foodCoords = foodCoords.filter(e => checkLostFoods(e, lostFoodCoords));
             for (let id in foodCoords) {
                 let coord = foodCoords[id];
                 ctx.beginPath();
@@ -101,6 +105,9 @@ webSocket.onmessage = function(e) {
                 document.getElementById("rank").textContent = myRank;
             }
             break;
+        case "foodInit":
+            foodCoords = data["food"];
+            break;
         default:
             console.log("missing data");
     }
@@ -119,7 +126,7 @@ async function tryConnect(obniz) {
 
 function goRight(obniz) {
     let canvas = document.getElementById('park');
-    myCoord.x += 1;
+    myCoord.x += movePx;
     webSocket.send(JSON.stringify({
         name: "update", x: myCoord.x,
         height: canvas.height,
@@ -129,7 +136,7 @@ function goRight(obniz) {
 
 function goLeft(obniz) {
     let canvas = document.getElementById('park');
-    myCoord.x -= 1;
+    myCoord.x -= movePx;
     webSocket.send(JSON.stringify({
         name: "update", x: myCoord.x,
         height: canvas.height,
@@ -139,7 +146,7 @@ function goLeft(obniz) {
 
 function goUp(obniz) {
     let canvas = document.getElementById('park');
-    myCoord.y -= 1;
+    myCoord.y -= movePx;
     webSocket.send(JSON.stringify({
         name: "update", y: myCoord.y,
         height: canvas.height,
@@ -149,7 +156,7 @@ function goUp(obniz) {
 
 function goDown(obniz) {
     let canvas = document.getElementById('park');
-    myCoord.y += 1;
+    myCoord.y += movePx;
     webSocket.send(JSON.stringify({
         name: "update", y: myCoord.y,
         height: canvas.height,
@@ -162,6 +169,14 @@ function reset(obniz) {
         name: "reset",
         uuid: myUuid
     }))
+}
+
+function checkLostFoods(coord, lostFoodCoords) {
+    for (let lostCoord of lostFoodCoords) {
+        if (lostCoord.x == coord.x && lostCoord.y == coord.y)
+            return false
+    }
+    return true
 }
 
 function generateUuid() {

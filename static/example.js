@@ -3,18 +3,33 @@ obniz.onconnect = async function() {
     var joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
     joystick.onchangex = function(val) {
         if (val > 0.8)
-            goRight(obniz);
-        else if (val < -0.8)
-            goLeft(obniz);
-    };
-    joystick.onchangey = function(val) {
-        if (val > 0.8)
             goDown(obniz);
         else if (val < -0.8)
             goUp(obniz);
     };
+    joystick.onchangey = function(val) {
+        if (val > 0.8)
+            goLeft(obniz);
+        else if (val < -0.8)
+            goRight(obniz);
+    };
 }
 
+obniz.onconnect = async function() {
+    let joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
+    while (true) {
+        let x = await joystick.getXWait()
+        let y = await joystick.getYWait()
+        if (x > 0.8)
+            goDown(obniz);
+        else if (x < -0.8)
+            goUp(obniz);
+        if (y > 0.8)
+            goLeft(obniz);
+        else if (y < -0.8)
+            goRight(obniz);
+    }
+}
 // Button
 obniz.onconnect = async function() {
     var button = obniz.wired("Button", {signal: 0, gnd: 1});
