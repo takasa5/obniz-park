@@ -62,14 +62,6 @@ async def process_ws(ws):
                     OBNIZ_COORDS[obniz_id]["y"] = rcv["y"]
             # エサの取得処理
             r = rcv["height"]
-            # prev_count = len(FOOD_COORDS)
-            # FOOD_COORDS = [
-            #     coord for coord in FOOD_COORDS
-            #     if not include_coord(
-            #         {"x": coord["x"] * r, "y": coord["y"] * r},
-            #         OBNIZ_COORDS[obniz_id]
-            #     )
-            # ]
             LOST_FOOD_COORDS = [
                 coord for coord in FOOD_COORDS
                 if include_coord(
@@ -87,6 +79,9 @@ async def process_ws(ws):
                             "y": random.uniform(0, 1.0)
                         }
                     )
+                await bloadcast({
+                    "name": "foodInit", "food": FOOD_COORDS
+                })
         # 座標リセット
         elif rcv["name"] == "reset":
             if ws != OBNIZ_WS_LIST[rcv["uuid"]]["ws"]:
@@ -94,25 +89,25 @@ async def process_ws(ws):
             obniz_id = OBNIZ_WS_LIST[rcv["uuid"]]["id"]
             OBNIZ_COORDS[obniz_id] = {"x": 0, "y": 0, "point": 0}
         # 全員に変更を送信
-        await bloadcast()
+        await bloadcast({
+            "name": "coords",
+            "obniz": OBNIZ_COORDS,
+            "lost": LOST_FOOD_COORDS
+        })
 
 def include_coord(point, area_ul):
     return ((area_ul["x"] <= point["x"] and point["x"] <= area_ul["x"] + 10) and
             (area_ul["y"] <= point["y"] and point["y"] <= area_ul["y"] + 10))
 
-async def bloadcast():
+async def bloadcast(message):
     global OBNIZ_WS_LIST, OBNIZ_COORDS, FOOD_COORDS, LOST_FOOD_COORDS
     disconnected_list = []
     for uuid, value in OBNIZ_WS_LIST.items():
         obniz_id = value["id"]
         ws = value["ws"]
         try:
-            await ws.send_json({
-                    "name": "coords",
-                    "obniz": OBNIZ_COORDS,
-                    "lost": LOST_FOOD_COORDS
-                  })
-        except RuntimeError as e:
+            await ws.send_json(message)
+        except RuntimeError:
             disconnected_list.append(uuid)
     for coords in LOST_FOOD_COORDS:
         FOOD_COORDS.remove(coords)

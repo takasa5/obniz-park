@@ -7,7 +7,7 @@ if (!regex.test(obnizId)) {
     window.location.href = "/"
 } else {
     // websocket確立
-    webSocket = new WebSocket('ws://' + location.host + '/ws');
+    webSocket = new WebSocket('wss://' + location.host + '/ws');
     // obniz接続
     obniz = new Obniz(obnizId, {
         auto_connect: false,
