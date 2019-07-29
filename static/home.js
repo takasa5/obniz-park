@@ -13,7 +13,9 @@ if (!regex.test(obnizId)) {
         auto_connect: false,
         access_token: document.getElementById('accessToken').textContent
     });
-    tryConnect(obniz);
+    webSocket.onopen = function() {
+        tryConnect(obniz);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
@@ -25,8 +27,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     editor.setValue(`obniz.onconnect = async function() {
     let joystick = obniz.wired('JoyStick', {sw: 0, y: 1, x: 2, vcc: 3, gnd: 4});
     while (true) {
-        let x = await joystick.getXWait()
-        let y = await joystick.getYWait()
+        let x = await joystick.getXWait();
+        let y = await joystick.getYWait();
         if (x > 0.8)
             goDown(obniz);
         else if (x < -0.8)
